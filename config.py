@@ -18,3 +18,4 @@ BLOCKED_FOUR = 10000
 com = 1  # role
 hum = 2  # role
 empty = 0  # role
+# this line is done on my ipad.
