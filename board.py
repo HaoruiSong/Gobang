@@ -1,6 +1,6 @@
 import numpy as np
 import config
-
+# Now I add a line directly on the website on my pc. And pull on the working copy. what will happen.
 
 class Zobrist(object):
     def __init__(self):
