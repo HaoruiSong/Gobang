@@ -158,6 +158,10 @@ class AI(Board):
 						return t
 		return -1
 
+	def put(self, point, role):
+		# todo: finish the function
+		pass
+
 	def initScore(self):
 		for i in range(0, 15):
 			for j in range(0, 15):
@@ -465,12 +469,12 @@ class AI(Board):
 
 	def deeping(self, deep):
 		candidates = self.gen(config.com)
-		Cache = {}
+		self.Cache = {}
 		for i in range(2, deep + 1, 2):
 			bestScore = self.negamax(candidates, i, -1 * config.FIVE, config.FIVE)
 			if bestScore >= config.FIVE: break
 
-		candidates = sorted(candidates, cmp_to_key(self.pointCompare))
+		candidates = sorted(candidates, key=cmp_to_key(self.pointCompare))
 		result = candidates[0]
 		return result
 
@@ -493,7 +497,7 @@ class AI(Board):
 		ei = ej = 14
 		lastpoint1, lastpoint2 = Point(), Point # point len = 4
 
-		if starSpread:
+		if starSpread and config.star:
 			i = len(self.allsteps) - 1
 			while lastpoint1.x != -1 and i >= 0:
 				p = self.allsteps[i]
@@ -530,10 +534,93 @@ class AI(Board):
 						if not self.hasNeighbor(Point(i, j), 1, 1): continue
 					elif not self.hasNeighbor(Point(i, j), 2, 2): continue
 					p = Point(i, j)
-					# TODO finish the defination of this function
+					scoreHum = p.scoreHum = self.humScore[i, j]
+					scoreCom = p.scoreCom = self.comScore[i, j]
+					maxScore = max(scoreCom, scoreHum)
+					p.score = maxScore
+					p.role = role
+
+					if scoreCom > scoreHum: p.attack = config.com
+					else: p.attack = config.hum
+					if starSpread and config.star:
+						if ((abs(i - lastpoint1.x) > 5 or abs(j - lastpoint1.y) > 5)
+							and (abs(i - lastpoint2.x) > 5 or abs(j - lastpoint2.y) > 5)): continue
+						if (maxScore >= config.FIVE or
+								(i == lastpoint1.x or j == lastpoint1.y or abs(i - lastpoint1.x) == abs(j - lastpoint1.y)) or
+								(i == lastpoint2.x or j == lastpoint2.y or abs(i - lastpoint2.x) == abs(j - lastpoint2.y))):
+							pass
+						else: continue
+
+					if scoreCom >= config.FIVE: fives.append(p)
+					elif scoreHum >= config.FIVE: fives.append(p)
+					elif scoreCom >= config.FOUR: comfours.append(p)
+					elif scoreHum >= config.FOUR: humfours.append(p)
+					elif scoreCom >= config.BLOCKED_FOUR: comblockedfours.append(p)
+					elif scoreHum >= config.BLOCKED_FOUR: humblockedfours.append(p)
+					elif scoreCom >= config.THREE * 2: comtwothrees.append(p)
+					elif scoreHum >= config.THREE * 2: humtwothrees.append(p)
+					elif scoreCom >= config.THREE: comthrees.append(p)
+					elif scoreHum >= config.THREE: humthrees.append(p)
+					elif scoreCom >= config.TWO: comtwos.insert(0, p)
+					elif scoreHum >= config.TWO: humtwos.insert(0, p)
+					else: neighbors.append(p)
+
+		if len(fives) > 0: return fives
+		if role == config.com and len(comfours) > 0: return comfours
+		if role == config.hum and len(humfours) > 0: return comfours
+		if role == config.com and len(humfours) > 0 and len(comblockedfours) == 0: return humfours
+		if role == config.hum and len(comfours) > 0 and len(humblockedfours) == 0: return comfours
+
+
+
+		if role == config.com: fours = comfours + humfours
+		else: fours = humfours + comfours
+
+		if role == config.com: blockedfours = comblockedfours + humblockedfours
+		else: blockedfours = humblockedfours + comblockedfours
+
+		if len(fours) > 0: return fours + blockedfours
+
+		ret = []
+		if role == config.com:
+			ret = (comtwothrees + humtwothrees + comblockedfours + humblockedfours
+				   + comthrees + humthrees)
+		if role == config.hum:
+			ret = (humtwothrees + comtwothrees + humblockedfours + comblockedfours
+				   + humthrees + comthrees)
+		if len(comtwothrees) > 0 or len(humtwothrees) > 0: return ret
+
+		if onlyThrees: return ret
+
+		if role == config.com: twos = comtwos + humtwos
+		else: twos = humtwos + comtwos
+
+		twos = sorted(twos, key=self.pointCompare)
+		if len(twos) > 0: ret += twos
+		else: ret += neighbors
+
+		countlimit = 20
+		if len(ret) > countlimit: ret = ret[0:20]
+
+		return ret
+
+
+
+	def r(self, deep, alpha, beta, role, step, steps, spread):
+		# todo finish the function
+		pass
+
+
 
 
 	def negamax(self, candidates, deep, alpha, beta):
-		pass
+		for i in range(0, len(candidates)):
+			p = candidates[i]
+			self.put(p, config.com)
+			steps = []
+			steps.append(p)
+			v = self.r(deep - 1, -beta, -alpha, config.hum, 1, steps, 0)
+			# todo: finish the rest of the function
+
 
 
