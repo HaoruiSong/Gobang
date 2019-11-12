@@ -2,6 +2,8 @@ import numpy as np
 import config
 from functools import cmp_to_key
 from point import Point
+from point import Node
+import copy
 from point import Obj
 # Now I add a line directly on the website on my pc. And pull on the working copy. what will happen.
 
@@ -159,11 +161,57 @@ class AI(Board):
 						return t
 		return -1
 
+	def update(self, point, dir = -1):
+		role = self.board[point.x, point.y]
+		if role != config.hum:
+			cs = self.scorePoint(point, config.com, dir)
+			self.comScore[point.x, point.y] = cs
+		else: self.comScore[point.x, point.y] = 0
+
+		if role != config.com:
+			hs = self.scorePoint(point, config.hum, dir)
+			self.humScore[point.x, point.y] = hs
+		else: self.humScore[point.x, point.y] = 0
+
+	def updateScore(self, point):
+		radius = 6
+		for i in range(-radius, radius + 1):
+			x, y = point.x, point.y + i
+			if y < 0: continue
+			if y >= 15: break
+			self.update(Point(x, y), 0)
+
+		for i in range(-radius, radius + 1):
+			x, y = point.x + i, point.y
+			if x < 0: continue
+			if x >= 15: break
+			self.update(Point(x, y), 1)
+
+		for i in range(-radius, radius + 1):
+			x, y = point.x + i, point.y + i
+			if x < 0 or y < 0: continue
+			if x >= 15 or y >= 15: break
+			self.update(Point(x, y), 2)
+
+		for i in range(-radius, radius + 1):
+			x, y = point.x + i, point.y - i
+			if x < 0 or y < 0: continue
+			if x >= 15 or y >= 15: continue
+			self.update(Point(x, y), 3)
+
 	def put(self, point, role):
-		# todo: finish the function
-		pass
+		point.role = role
+		self.board[point.x, point.y] = role
+		self.zobrist.go(point, role)
+		self.updateScore(point)
+		self.allsteps.append(point)
 
 	def remove(self, point):
+		r = self.board[point.x, point.y]
+		self.zobrist.go(point, r)
+		self.board[point.x, point.y] = config.empty
+		self.updateScore(point)
+		self.allsteps.pop()
 		# todo: finish the function
 		pass
 
@@ -608,17 +656,27 @@ class AI(Board):
 		if len(ret) > countlimit: ret = ret[0:20]
 
 		return ret
-		
-		
-	def fixScore(self, type):
-		# todo 
-		pass
-		
-		
-	def cachefunc(self):
-		# todo
-		pass
 
+	def fixScore(self, type):
+		if config.BLOCKED_FOUR <= type < config.FOUR:
+			if config.BLOCKED_FOUR <= type < config.BLOCKED_FOUR + config.THREE:
+				return config.THREE
+			elif config.BLOCKED_FOUR + config.THREE <= type < config.BLOCKED_FOUR * 2:
+				return config.FOUR
+			else:
+				return config.FOUR * 2
+
+		return type
+
+	def cachefunc(self, deep, score):
+		if not config.cache: return
+		obj = Obj()
+		obj.deep = deep
+		obj.score.score = score.score
+		obj.score.step = score.step
+		obj.score.steps = score.steps
+		# obj.b = self.toString() attention here
+		self.cache[self.zobrist.code] = obj
 
 	def evaluate(self, role):
 		self.comMaxScore = 0
@@ -637,11 +695,10 @@ class AI(Board):
 		
 		return result
 
-
 	def r(self, deep, alpha, beta, role, step, steps, spread):
 		if config.cache:
 			if self.zobrist.code in self.cache:
-				Obj c = self.cache[self.zobrist.code]
+				c = self.cache[self.zobrist.code]
 				if c.deep >= deep:
 					ret = Node()
 					ret.score = c.score.score
@@ -662,13 +719,13 @@ class AI(Board):
 		if deep <= 0 or _e >= config.FIVE or _e <= -1 * config.FIVE:
 			return leaf
 		best = Node()
-		best.score = self.MIN
+		best.score = self.Min
 		best.step = step
 		best.steps = steps
 		
-		points = gen(role, step > 4, step > 4)
+		points = self.gen(role, step > 4, step > 4)
 		
-		if len(points) == 0 return leaf
+		if len(points) == 0: return leaf
 		
 		for i in points:
 			self.put(i, role)
@@ -681,9 +738,9 @@ class AI(Board):
 					_deep += 2
 					_spread += 1
 			
-			_steps = steps # attention not deep copy
+			_steps = copy.copy(steps) # attention not deep copy
 			_steps.append(i)
-			v = r(_deep, -beta, -alpha, self.reverse(role), step+1, _steps, _spread)
+			v = self.r(_deep, -beta, -alpha, config.reverse(role), step+1, _steps, _spread)
 			v.score *= -1
 			self.remove(i)
 			
@@ -691,15 +748,12 @@ class AI(Board):
 				best = v
 			alpha = max(best.score, alpha)
 			if v.score >= beta:
-				v.score = self.MAX - 1
+				v.score = self.Max - 1
 				return v
 		
 		self.cachefunc(deep, best)
 		
 		return best
-
-
-
 
 	def negamax(self, candidates, deep, alpha, beta):
 		for i in range(0, len(candidates)):
@@ -707,7 +761,7 @@ class AI(Board):
 			self.put(p, config.com)
 			steps = []
 			steps.append(p)
-			v = self.r(deep - 1, -beta, -alpha, config.hum, 1, steps, 0)
+			v = self.r(deep - 1, -beta, -alpha, config.hum, 1, copy.copy(steps), 0)
 			v.score *= -1
 			alpha = max(alpha, v.score)
 			self.remove(p)
