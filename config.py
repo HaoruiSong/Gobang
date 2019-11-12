@@ -1,4 +1,4 @@
-
+spreadLimit = 1
 searchdeep = 8
 countlimit = 20
 random_ = False

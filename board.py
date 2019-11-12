@@ -2,6 +2,7 @@ import numpy as np
 import config
 from functools import cmp_to_key
 from point import Point
+from point import Obj
 # Now I add a line directly on the website on my pc. And pull on the working copy. what will happen.
 
 class Zobrist(object):
@@ -607,15 +608,95 @@ class AI(Board):
 		if len(ret) > countlimit: ret = ret[0:20]
 
 		return ret
+		
+		
+	def fixScore(self, type):
+		# todo 
+		pass
+		
+		
+	def cachefunc(self):
+		# todo
+		pass
 
+
+	def evaluate(self, role):
+		self.comMaxScore = 0
+		self.humMaxScore = 0
+		
+		for i in range(0, 15):
+			for j in range(0, 15):
+				if self.board[i, j] == config.com:
+					self.comMaxScore += self.fixScore(self.comScore[i, j])
+				elif self.board[i, j] == config.hum:
+					self.humMaxScore += self.fixScore(self.humScore[i, j])
+		if role == config.com:
+			result = self.comMaxScore - self.humMaxScore
+		else:
+			result = (self.comMaxScore - self.humMaxScore) * (-1)
+		
+		return result
 
 
 	def r(self, deep, alpha, beta, role, step, steps, spread):
-		# todo finish the function
 		if config.cache:
 			if self.zobrist.code in self.cache:
-
-		pass
+				Obj c = self.cache[self.zobrist.code]
+				if c.deep >= deep:
+					ret = Node()
+					ret.score = c.score.score
+					ret.steps = c.steps
+					ret.step = c.step
+					return ret
+				else:
+					if c.score.score >= config.FOUR or c.score.score <= -1 * config.FOUR:
+						return c.score
+		
+		_e = self.evaluate(role)
+		
+		leaf = Node()
+		leaf.score = _e
+		leaf.step = step
+		leaf.steps = steps
+		
+		if deep <= 0 or _e >= config.FIVE or _e <= -1 * config.FIVE:
+			return leaf
+		best = Node()
+		best.score = self.MIN
+		best.step = step
+		best.steps = steps
+		
+		points = gen(role, step > 4, step > 4)
+		
+		if len(points) == 0 return leaf
+		
+		for i in points:
+			self.put(i, role)
+			_deep = deep - 1
+			
+			_spread = spread
+			
+			if _spread < config.spreadLimit:
+				if (role == config.com and i.scoreHum >= config.FIVE) or (role == config.hum and i.scoreCom >= config.FIVE):
+					_deep += 2
+					_spread += 1
+			
+			_steps = steps # attention not deep copy
+			_steps.append(i)
+			v = r(_deep, -beta, -alpha, self.reverse(role), step+1, _steps, _spread)
+			v.score *= -1
+			self.remove(i)
+			
+			if v.score > best.score:
+				best = v
+			alpha = max(best.score, alpha)
+			if v.score >= beta:
+				v.score = self.MAX - 1
+				return v
+		
+		self.cachefunc(deep, best)
+		
+		return best
 
 
 

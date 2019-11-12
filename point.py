@@ -21,7 +21,7 @@ class Node:
         self.score = 0
 
 
-class obj:
+class Obj:
     def __init__(self):
         self.deep = 0
         self.score = Node()
