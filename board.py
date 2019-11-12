@@ -162,6 +162,10 @@ class AI(Board):
 		# todo: finish the function
 		pass
 
+	def remove(self, point):
+		# todo: finish the function
+		pass
+
 	def initScore(self):
 		for i in range(0, 15):
 			for j in range(0, 15):
@@ -608,6 +612,9 @@ class AI(Board):
 
 	def r(self, deep, alpha, beta, role, step, steps, spread):
 		# todo finish the function
+		if config.cache:
+			if self.zobrist.code in self.cache:
+
 		pass
 
 
@@ -620,7 +627,13 @@ class AI(Board):
 			steps = []
 			steps.append(p)
 			v = self.r(deep - 1, -beta, -alpha, config.hum, 1, steps, 0)
-			# todo: finish the rest of the function
+			v.score *= -1
+			alpha = max(alpha, v.score)
+			self.remove(p)
+			candidates[i].score = v.score
+			candidates[i].steps = v.steps
+		return alpha
+
 
 
 
