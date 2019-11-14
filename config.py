@@ -1,8 +1,8 @@
 spreadLimit = 1
-searchdeep = 8
+searchdeep = 4
 countlimit = 20
 random_ = False
-star = True
+star = False
 cache = True
 debug = False
 ONE = 10

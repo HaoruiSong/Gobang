@@ -57,7 +57,15 @@ class Board(object):
 		return self.counter
 
 
-
+def pointCompare(a, b):
+	if a.score == b.score:
+		if a.score >= 0:
+			if a.step != b.step: return a.step < b.step
+			else: return b.step < a.step
+		else:
+			if a.step != b.step: return a.step > b.step
+			else: return b.step > a.step
+	else: return b.score < a.score
 
 
 class AI(Board):
@@ -74,7 +82,7 @@ class AI(Board):
 		# self.count = 0
 		self.initScore()
 
-	def isfive(self, point, role):
+	def isfive(self, point, role):  # checked
 		len = 15
 		cnt = 1
 		i = point.y + 1
@@ -90,8 +98,9 @@ class AI(Board):
 			t = self.board[point.x, i]
 			if t != role: break
 			cnt += 1
-			i += 1
-		if cnt >= 5: return True
+			i -= 1
+		if cnt >= 5:
+			return True
 
 		cnt = 1
 
@@ -108,8 +117,9 @@ class AI(Board):
 			t = self.board[i, point.y]
 			if t != role: break
 			cnt += 1
-			i += 1
-		if cnt >= 5: return True
+			i -= 1
+		if cnt >= 5:
+			return True
 
 		cnt = 1
 
@@ -129,7 +139,9 @@ class AI(Board):
 			if t != role: break
 			cnt += 1
 			i += 1
-		if cnt >= 5: return True
+		if cnt >= 5:
+			print("3dir", point.x, point.y, "win")
+			return True
 
 		cnt = 1
 
@@ -149,10 +161,12 @@ class AI(Board):
 			if t != role: break
 			cnt += 1
 			i += 1
-		if cnt >= 5: return True
+		if cnt >= 5:
+			print("4dir", point.x, point.y, "win")
+			return True
 		return False
 
-	def win(self):
+	def win(self):  # checked
 		for i in range(0, 15):
 			for j in range(0, 15):
 				t = self.board[i, j]
@@ -236,6 +250,9 @@ class AI(Board):
 		ret = 0
 		empty = 0
 		cnt = block = secondCount = 0
+
+
+
 		if dir == -1 or dir == 0:
 			cnt = 1
 			block = secondCount = 0
@@ -271,7 +288,7 @@ class AI(Board):
 				if t == config.empty:
 					if empty == -1 and i > 0 and self.board[point.x, i - 1] == role:
 						empty = 0
-						i += 1
+						i -= 1
 						continue
 					else:
 						break
@@ -279,13 +296,16 @@ class AI(Board):
 					secondCount += 1
 					if empty != -1:
 						empty += 1
-					i += 1
+					i -= 1
 					continue
 				else:
 					block += 1
 					break
 			cnt += secondCount
 		ret += self.countToScore(cnt, block, empty)
+
+
+
 		if dir == -1 or dir == 1:
 			cnt = 1
 			block = secondCount = 0
@@ -322,7 +342,7 @@ class AI(Board):
 				if t == config.empty:
 					if empty == -1 and i > 0 and self.board[i - 1, point.y] == role:
 						empty = 0
-						i += 1
+						i -= 1
 						continue
 					else:
 						break
@@ -330,7 +350,7 @@ class AI(Board):
 					secondCount += 1
 					if empty != 1:
 						empty += 1
-					i += 1
+					i -= 1
 					continue
 				else:
 					block += 1
@@ -338,6 +358,8 @@ class AI(Board):
 			cnt += secondCount
 
 		ret += self.countToScore(cnt, block, empty)
+
+
 
 		if dir == -1 or dir == 2:
 			cnt = 1
@@ -510,15 +532,7 @@ class AI(Board):
 
 		return 0
 
-	def pointCompare(self, a, b):
-		if a.score == b.score:
-			if a.score >= 0:
-				if a.step != b.step: return a.step < b.step
-				else: return b.step < a.step
-			else:
-				if a.step != b.step: return a.step > b.step
-				else: return b.step > a.step
-		else: return b.score < a.score
+
 
 	def deeping(self, deep):
 		candidates = self.gen(config.com)
@@ -527,7 +541,7 @@ class AI(Board):
 			bestScore = self.negamax(candidates, i, -1 * config.FIVE, config.FIVE)
 			if bestScore >= config.FIVE: break
 
-		candidates = sorted(candidates, key=cmp_to_key(self.pointCompare))
+		candidates = sorted(candidates, key=cmp_to_key(pointCompare))
 		result = candidates[0]
 		return result
 
@@ -648,7 +662,7 @@ class AI(Board):
 		if role == config.com: twos = comtwos + humtwos
 		else: twos = humtwos + comtwos
 
-		twos = sorted(twos, key=self.pointCompare)
+		twos = sorted(twos, key=cmp_to_key(pointCompare))
 		if len(twos) > 0: ret += twos
 		else: ret += neighbors
 
