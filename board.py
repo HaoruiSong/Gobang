@@ -58,14 +58,17 @@ class Board(object):
 
 
 def pointCompare(a, b):
+	return b.score - a.score
+
+def pointCompare2(a, b):
 	if a.score == b.score:
 		if a.score >= 0:
-			if a.step != b.step: return a.step < b.step
-			else: return b.step < a.step
+			if a.step != b.step: return a.step - b.step
+			else: return b.step - a.step
 		else:
-			if a.step != b.step: return a.step > b.step
-			else: return b.step > a.step
-	else: return b.score < a.score
+			if a.step != b.step: return -1 * (a.step - b.step)
+			else: return -1 * (b.step - a.step)
+	else: return b.score - a.score
 
 
 class AI(Board):
@@ -73,6 +76,7 @@ class AI(Board):
 		Board.__init__(self)
 		self.humScore = np.zeros((15, 15), dtype=int)
 		self.comScore = np.zeros((15, 15), dtype=int)
+		self.scoreCache = np.zeros((3, 4, 15, 15), dtype=int)
 		self.allsteps = []
 		self.comMaxScore = 0
 		self.humMaxScore = 0
@@ -302,7 +306,8 @@ class AI(Board):
 					block += 1
 					break
 			cnt += secondCount
-		ret += self.countToScore(cnt, block, empty)
+			self.scoreCache[role, 0, point.x, point.y] = self.countToScore(cnt, block, empty)
+		ret += self.scoreCache[role, 0, point.x, point.y]
 
 
 
@@ -356,8 +361,8 @@ class AI(Board):
 					block += 1
 					break
 			cnt += secondCount
-
-		ret += self.countToScore(cnt, block, empty)
+			self.scoreCache[role, 1, point.x, point.y] = self.countToScore(cnt, block, empty)
+		ret += self.scoreCache[role, 1, point.x, point.y]
 
 
 
@@ -412,7 +417,8 @@ class AI(Board):
 					block += 1
 					break
 			cnt += secondCount
-		ret += self.countToScore(cnt, block, empty)
+			self.scoreCache[role, 2, point.x, point.y] = self.countToScore(cnt, block, empty)
+		ret += self.scoreCache[role, 2, point.x, point.y]
 
 		if dir == -1 or dir == 3:
 			cnt = 1
@@ -465,8 +471,8 @@ class AI(Board):
 					block += 1
 					break
 			cnt += secondCount
-
-		ret += self.countToScore(cnt, block, empty)
+			self.scoreCache[role, 3, point.x, point.y] = self.countToScore(cnt, block, empty)
+		ret += self.scoreCache[role, 3, point.x, point.y]
 		return ret
 
 	def countToScore(self, cnt, block, empty):
@@ -541,7 +547,7 @@ class AI(Board):
 			bestScore = self.negamax(candidates, i, -1 * config.FIVE, config.FIVE)
 			if bestScore >= config.FIVE: break
 
-		candidates = sorted(candidates, key=cmp_to_key(pointCompare))
+		candidates = sorted(candidates, key=cmp_to_key(pointCompare2))
 		result = candidates[0]
 		return result
 
@@ -562,7 +568,7 @@ class AI(Board):
 		neighbors = []
 		si = sj = 0
 		ei = ej = 14
-		lastpoint1, lastpoint2 = Point(), Point # point len = 4
+		lastpoint1, lastpoint2 = Point(), Point()  # point len = 4
 
 		if starSpread and config.star:
 			i = len(self.allsteps) - 1
@@ -634,7 +640,7 @@ class AI(Board):
 
 		if len(fives) > 0: return fives
 		if role == config.com and len(comfours) > 0: return comfours
-		if role == config.hum and len(humfours) > 0: return comfours
+		if role == config.hum and len(humfours) > 0: return humfours  # here I made a mistake
 		if role == config.com and len(humfours) > 0 and len(comblockedfours) == 0: return humfours
 		if role == config.hum and len(comfours) > 0 and len(humblockedfours) == 0: return comfours
 
@@ -728,7 +734,7 @@ class AI(Board):
 		leaf = Node()
 		leaf.score = _e
 		leaf.step = step
-		leaf.steps = steps
+		leaf.steps = steps  # attention not copy here
 		
 		if deep <= 0 or _e >= config.FIVE or _e <= -1 * config.FIVE:
 			return leaf
