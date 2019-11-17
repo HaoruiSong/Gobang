@@ -548,6 +548,10 @@ class AI(Board):
 			if bestScore >= config.FIVE: break
 
 		candidates = sorted(candidates, key=cmp_to_key(pointCompare2))
+		for i in candidates:
+			if self.isfive(i, config.com) or self.isfive(i, config.hum):
+				return i
+
 		result = candidates[0]
 		return result
 
