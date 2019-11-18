@@ -104,6 +104,7 @@ class AI(Board):
 			cnt += 1
 			i -= 1
 		if cnt >= 5:
+			print("1dir", point.x, point.y, "win")
 			return True
 
 		cnt = 1
@@ -123,6 +124,7 @@ class AI(Board):
 			cnt += 1
 			i -= 1
 		if cnt >= 5:
+			print("2dir", point.x, point.y, "win")
 			return True
 
 		cnt = 1
@@ -551,6 +553,18 @@ class AI(Board):
 		for i in candidates:
 			if self.isfive(i, config.com) or self.isfive(i, config.hum):
 				return i
+		ret = -1
+		for i in range(15):
+			for j in range(15):
+				if self.board[i, j] == config.empty:
+					if self.isfive(Point(i, j), config.com):
+						return Point(i, j, config.com)
+					elif self.isfive(Point(i, j), config.hum):
+						ret = Point(i, j, config.com)
+
+		if type(ret) == Point:
+			return ret
+
 
 		result = candidates[0]
 		return result
@@ -762,7 +776,7 @@ class AI(Board):
 					_deep += 2
 					_spread += 1
 			
-			_steps = copy.copy(steps) # attention not deep copy
+			_steps = copy.copy(steps)
 			_steps.append(i)
 			v = self.r(_deep, -beta, -alpha, config.reverse(role), step+1, _steps, _spread)
 			v.score *= -1

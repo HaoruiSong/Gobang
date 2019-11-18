@@ -16,7 +16,11 @@ a = Point_test(1, 1, 1)
 b = Point_test(2, 2, 2)
 c = Point_test(3, 3, 3)
 
-l = [b, a, c]
-print(l[0].x, l[1].x, l[2].x)
-l = sorted(l, key=cmp_to_key(pointcompare))
-print(l[0].x, l[1].x, l[2].x)
+# l = [b, a, c]
+# print(l[0].x, l[1].x, l[2].x)
+# l = sorted(l, key=cmp_to_key(pointcompare))
+# print(l[0].x, l[1].x, l[2].x)
+# d = Point_test()
+# d = -1
+# if type(d) == int:
+#     print('yes')

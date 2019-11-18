@@ -53,6 +53,7 @@ start_normal_image_filename = 'asset/normal-start.png'
 start_press_image_filename = 'asset/press-start.png'
 start_pass_image_filename = 'asset/pass-start.png'
 warning_choose_image_filename = 'asset/warning-choose.png'
+warning_notstart_image_filename = 'asset/warning-notstart.png'
 black_dot_image_filename = 'asset/black-dot.png'
 white_dot_image_filename = 'asset/white-dot.png'
 youwin_image_filename = 'asset/youwin.png'
@@ -74,6 +75,7 @@ start_normal = pygame.image.load(start_normal_image_filename)
 start_press = pygame.image.load(start_press_image_filename)
 start_pass = pygame.image.load(start_pass_image_filename)
 warning_choose = pygame.image.load(warning_choose_image_filename)
+warning_notstart = pygame.image.load(warning_notstart_image_filename)
 black_dot = pygame.image.load(black_dot_image_filename)
 white_dot = pygame.image.load(white_dot_image_filename)
 youwin = pygame.image.load(youwin_image_filename)
@@ -157,15 +159,18 @@ def normalize_xy(x, y):
     return x * 35 + 55 - 16, y * 35 + 55 - 16
 
 
-def draw_warning(screen):
-    screen.blit(warning_choose, (200, 150))
+def draw_warning(screen, type):
+    if type == 'choose':
+        screen.blit(warning_choose, (200, 150))
+    elif type == 'notstart':
+        screen.blit(warning_notstart, (200, 150))
 
 
 def draw_announcement(screen, is_winer):
     if is_winer:
-        screen.blit(youwin, (265, 270))
+        screen.blit(youwin, (265, 540))
     else:
-        screen.blit(youlose, (265, 270))
+        screen.blit(youlose, (265, 540))
 
 g = Game()
 pygame.init()
@@ -222,6 +227,7 @@ while True:
         last_pos_x = x
         last_pos_y = y
         turn = 'you'
+        pygame.event.clear()
 
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -298,29 +304,38 @@ while True:
                     last_sit = 'normal'
                     draw_start(screen, last_sit)
                     pygame.display.update()
-                    draw_warning(screen)
+                    draw_warning(screen, 'choose')
                     pygame.display.update()
                     warning = True
 
             # press the board
             elif 55 - 17 <= pos[0] <= 55 + 490 + 17 and\
                 55 - 17 <= pos[1] <= 55 + 490 + 17:
-                if get_chessman_pos(pos) == get_chessman_pos((last_down_x, last_down_y)) and game_start:
-                    if last_pos_x != -1 and last_pos_y != -1:
-                        draw_chessman('ai', (last_pos_x, last_pos_y))
-                        # print(last_pos_x, last_pos_y)
-                    draw_dot_chessman('you', get_chessman_pos(pos))
-                    last_pos_x, last_pos_y = get_chessman_pos(pos)
-                    # the x versus y plane is opposite with the board
-                    g.set(int((last_pos_y + 16 - 55) / 35), int((last_pos_x + 16 - 55) / 35), config.hum)
-                    turn = 'ai'
-                    pygame.display.update()
-                    if g.check() == 2:
-                        print('you win')
-                        announcing_result = True
-                        draw_announcement(screen, True)
+                if get_chessman_pos(pos) == get_chessman_pos((last_down_x, last_down_y)):
+                    if game_start:
+                        if g.board.board[int((pos[1] + 16 - 55) / 35), int((pos[0] + 16 - 55) / 35)] != config.empty:
+                            continue
+
+                        if last_pos_x != -1 and last_pos_y != -1:
+                            draw_chessman('ai', (last_pos_x, last_pos_y))
+                            # print(last_pos_x, last_pos_y)
+                        draw_dot_chessman('you', get_chessman_pos(pos))
+                        last_pos_x, last_pos_y = get_chessman_pos(pos)
+                        # the x versus y plane is opposite with the board
+                        g.set(int((last_pos_y + 16 - 55) / 35), int((last_pos_x + 16 - 55) / 35), config.hum)
+                        turn = 'ai'
                         pygame.display.update()
-                        game_start = False
+                        if g.check() == 2:
+                            print('you win')
+                            announcing_result = True
+                            draw_announcement(screen, True)
+                            pygame.display.update()
+                            game_start = False
+                    else:
+                        draw_warning(screen, 'notstart')
+                        pygame.display.update()
+                        warning = True
+
 
             # press mode or first
             elif 600 <= pos[0] <= 600 + 170 and 170 <= pos[1] <= 170 + 60 and \
